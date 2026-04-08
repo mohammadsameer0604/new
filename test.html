@@ -1,1 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Living Portfolio | BTech CSE</title>
+    <style>
+        /* ============================================
+           CORE ENGINE: THE LIVING DOM
+           ============================================ */
+        :root {
+            --cursor-x: 50vw;
+            --cursor-y: 50vh;
+            --halo-x: 50vw;
+            --halo-y: 50vh;
+            --scroll-progress: 0;
+            --primary: #00f5ff;
+            --secondary: #ff00e6;
+            --accent: #7b2cbf;
+            --dark: #0a0a0f;
+            --light: #ffffff;
+            --noise-opacity: 0.05;
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        html, body {
+            overflow: hidden;
+            background: var(--dark);
+            color: var(--light);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: 100vh;
+        }
+
+        /* Noise Overlay - Cinematic Texture */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: var(--noise-opacity);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Dual Cursor System */
+        .cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+
+        .cursor-halo {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: exclusion;
+            transition: border-color 0.3s, width 0.3s, height 0.3s;
+        }
+
+        .cursor-halo.hovering {
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 245, 255, 0.1);
+            border-color: var(--secondary);
+        }
+
+        /* Smooth Scroll Container */
+        .scroll-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            will-change: transform;
+        }
+
+        .section {
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 40px;
+        }
+
+        /* ============================================
+           SECTION 1: HERO - FLUID TYPOGRAPHY
+           ============================================ */
+        #hero {
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, var(--dark) 100%);
+        }
+
+        .hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 15vw, 12rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 10;
+            mix-blend-mode: lighten;
+        }
+
+        .hero-title .char {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 3vw, 2rem);
+            margin-top: 2rem;
+            opacity: 0.8;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator::before {
+            content: '';
+            display: block;
+            width: 30px;
+            height: 50px;
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+        }
+
+        .scroll-indicator::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 3px;
+            animation: scrollDown 1.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        @keyframes scrollDown {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
+
+        /* ============================================
+           SECTION 2: ORBITAL NAVIGATION
+           ============================================ */
+        .nav-orb {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            border-radius: 50%;
+            cursor: none;
+            z-index: 1000;
+            animation: pulse 3s infinite;
+        }
+
+        .nav-orb:hover {
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .orbital-menu {
+            position: fixed;
+            top: 60px;
+            right: 60px;
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.5s, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 999;
+        }
+
+        .orbital-menu.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .menu-item {
+            position: absolute;
+            padding: 15px 30px;
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid var(--primary);
+            border-radius: 30px;
+            color: var(--light);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.3s;
+            cursor: none;
+        }
+
+        .menu-item:hover {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        /* ============================================
+           SECTION 3: ABOUT - X-RAY PARALLAX
+           ============================================ */
+        #about {
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .layer-bg {
+            transform: translateZ(-100px) scale(1.5);
+        }
+
+        .layer-mid {
+            transform: translateZ(0);
+        }
+
+        .layer-fg {
+            transform: translateZ(50px) scale(0.9);
+        }
+
+        .about-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            border: 2px solid var(--secondary);
+            opacity: 0.3;
+        }
+
+        .shape-1 {
+            width: 200px;
+            height: 200px;
+            top: 20%;
+            left: 10%;
+            border-radius: 50%;
+        }
+
+        .shape-2 {
+            width: 150px;
+            height: 150px;
+            bottom: 30%;
+            right: 15%;
+            transform: rotate(45deg);
+        }
+
+        .shape-3 {
+            width: 100px;
+            height: 100px;
+            top: 60%;
+            left: 40%;
+            border-color: var(--primary);
+        }
+
+        .scan-text-container {
+            position: relative;
+            max-width: 800px;
+            padding: 40px;
+        }
+
+        .scan-text {
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            line-height: 1.6;
+            background: linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: scanReveal 3s ease-in-out infinite;
+        }
+
+        @keyframes scanReveal {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* ============================================
+           SECTION 4: SKILLS - NEURAL SYNAPSE WEB
+           ============================================ */
+        #skills {
+            background: #050508;
+        }
+
+        #skills-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .skills-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin-bottom: 2rem;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        /* ============================================
+           SECTION 5: PROJECTS - MORPHING PORTALS
+           ============================================ */
+        #projects {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0a1f 100%);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 40px;
+        }
+
+        .project-portal {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            cursor: none;
+        }
+
+        .project-portal:hover {
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            transform: scale(1.1);
+        }
+
+        .project-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .project-portal:hover .project-content {
+            opacity: 1;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .project-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 90%;
+            transition: width 0.3s;
+        }
+
+        .project-portal:hover .progress-fill {
+            width: 100%;
+        }
+
+        /* ============================================
+           SECTION 6: JOURNEY - TIME WARP TUNNEL
+           ============================================ */
+        #journey {
+            perspective: 1000px;
+            overflow: hidden;
+        }
+
+        .timeline-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            width: 50%;
+            padding: 30px;
+            opacity: 0;
+            transform: translateX(0) translateZ(-100px);
+            transition: all 0.5s;
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            text-align: right;
+            padding-right: 60px;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+            text-align: left;
+            padding-left: 60px;
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateX(0) translateZ(0);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            top: 40px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-dot {
+            right: -10px;
+        }
+
+        .timeline-item:nth-child(even) .timeline-dot {
+            left: -10px;
+        }
+
+        .timeline-year {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .timeline-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .timeline-desc {
+            opacity: 0.7;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           SECTION 7: CERTIFICATIONS - HOLOGRAPHIC PRISM
+           ============================================ */
+        #certifications {
+            background: radial-gradient(ellipse at center, #1a0a2e 0%, var(--dark) 100%);
+        }
+
+        .cert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px;
+        }
+
+        .cert-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transform-style: preserve-3d;
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        .cert-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .cert-card:hover::before {
+            left: 100%;
+        }
+
+        .cert-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .cert-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .cert-issuer {
+            opacity: 0.7;
+            margin-bottom: 15px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 255, 100, 0.1);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 15px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff64;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ============================================
+           SECTION 8: CONTACT - SENTIENT INPUT
+           ============================================ */
+        #contact {
+            background: linear-gradient(180deg, var(--dark) 0%, #0f0f1a 100%);
+        }
+
+        .contact-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .contact-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .contact-subtitle {
+            opacity: 0.7;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s;
+            cursor: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 245, 255, 0.05);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            opacity: 0.5;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .form-input:focus + .form-label,
+        .form-input:not(:placeholder-shown) + .form-label {
+            top: -10px;
+            left: 15px;
+            font-size: 0.8rem;
+            background: var(--dark);
+            padding: 0 10px;
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        .magnetic-btn {
+            position: relative;
+            padding: 20px 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            border-radius: 50px;
+            color: var(--dark);
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: none;
+        }
+
+        .urgency-bar {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 0, 100, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #ff0064;
+        }
+
+        .urgency-text {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .slots-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .slots-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0064, #ff00e6);
+            width: 20%;
+            animation: deplete 30s linear forwards;
+        }
+
+        @keyframes deplete {
+            from { width: 20%; }
+            to { width: 0%; }
+        }
+
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10001;
+            opacity: 0;
+        }
+
+        .confetti-container.active {
+            opacity: 1;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 60px;
+            border-radius: 30px;
+            border: 2px solid var(--primary);
+            text-align: center;
+            z-index: 10002;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .success-message.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .timeline-item {
+                width: 100%;
+                left: 0 !important;
+                text-align: left !important;
+                padding-left: 50px !important;
+                padding-right: 0 !important;
+            }
+
+            .timeline-line {
+                left: 20px;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-dot,
+            .timeline-item:nth-child(even) .timeline-dot {
+                left: 10px;
+                right: auto;
+            }
+
+            .orbital-menu {
+                width: 250px;
+                height: 250px;
+            }
+
+            .nav-orb {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Noise Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Dual Cursor System -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-halo"></div>
+
+    <!-- Orbital Navigation -->
+    <div class="nav-orb"></div>
+    <div class="orbital-menu">
+        <a href="#hero" class="menu-item" style="--angle: 0deg;">Home</a>
+        <a href="#about" class="menu-item" style="--angle: 72deg;">About</a>
+        <a href="#skills" class="menu-item" style="--angle: 144deg;">Skills</a>
+        <a href="#projects" class="menu-item" style="--angle: 216deg;">Projects</a>
+        <a href="#journey" class="menu-item" style="--angle: 288deg;">Journey</a>
+        <a href="#certifications" class="menu-item" style="--angle: 360deg;">Certifications</a>
+        <a href="#contact" class="menu-item" style="--angle: 432deg;">Contact</a>
+    </div>
+
+    <!-- Smooth Scroll Wrapper -->
+    <div class="scroll-wrapper">
+        <!-- Section 1: Hero -->
+        <section id="hero" class="section">
+            <canvas class="hero-canvas"></canvas>
+            <h1 class="hero-title" id="hero-title">Alex Chen</h1>
+            <p class="hero-subtitle">Full Stack Developer & Creative Engineer</p>
+            <div class="scroll-indicator"></div>
+        </section>
+
+        <!-- Section 2: About -->
+        <section id="about" class="section">
+            <div class="parallax-layer layer-bg">
+                <div class="about-shapes">
+                    <div class="shape shape-1"></div>
+                    <div class="shape shape-2"></div>
+                    <div class="shape shape-3"></div>
+                </div>
+            </div>
+            <div class="parallax-layer layer-mid">
+                <div class="scan-text-container">
+                    <p class="scan-text">
+                        I craft digital experiences that merge cutting-edge technology with human psychology. 
+                        Every line of code is designed to captivate, engage, and convert. 
+                        Welcome to the future of web development.
+                    </p>
+                </div>
+            </div>
+            <div class="parallax-layer layer-fg">
+                <div class="about-shapes">
+                    <div class="shape" style="top: 30%; right: 20%; width: 80px; height: 80px; border-color: var(--primary);"></div>
+                    <div class="shape" style="bottom: 20%; left: 30%; width: 60px; height: 60px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Skills -->
+        <section id="skills" class="section">
+            <canvas id="skills-canvas"></canvas>
+            <h2 class="skills-title">Neural Network</h2>
+        </section>
+
+        <!-- Section 4: Projects -->
+        <section id="projects" class="section">
+            <h2 class="skills-title">Project Portals</h2>
+            <div class="projects-grid">
+                <div class="project-portal">
+                    <div class="project-content">
+                        <h3 class="project-title">AI Vision System</h3>
+                        <p class="project-desc">Real-time object detection using TensorFlow.js with 98% accuracy</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="project-portal">
+                    <div class="project-content">
+                        <h3 class="project-title">Neural Dashboard</h3>
+                        <p class="project-desc">Analytics platform processing 1M+ events daily</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="project-portal">
+                    <div class="project-content">
+                        <h3 class="project-title">Quantum Chat</h3>
+                        <p class="project-desc">End-to-end encrypted messaging with zero-knowledge architecture</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="project-portal">
+                    <div class="project-content">
+                        <h3 class="project-title">Holo Commerce</h3>
+                        <p class="project-desc">AR-powered e-commerce with 3D product visualization</p>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Journey -->
+        <section id="journey" class="section">
+            <h2 class="skills-title">Time Warp</h2>
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2025</div>
+                    <h3 class="timeline-title">AI Model Deployment</h3>
+                    <p class="timeline-desc">Led team of 5 to deploy production ML model serving 100K+ users</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2024</div>
+                    <h3 class="timeline-title">Hackathon Winner</h3>
+                    <p class="timeline-desc">First place at National Tech Summit - Smart City Solution</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2023</div>
+                    <h3 class="timeline-title">Open Source Contributor</h3>
+                    <p class="timeline-desc">500+ contributions to major JavaScript frameworks</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2022</div>
+                    <h3 class="timeline-title">BTech CSE</h3>
+                    <p class="timeline-desc">Computer Science & Engineering with AI specialization</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Certifications -->
+        <section id="certifications" class="section">
+            <h2 class="skills-title">Holographic Credentials</h2>
+            <div class="cert-grid">
+                <div class="cert-card">
+                    <div class="cert-icon">🏆</div>
+                    <h3 class="cert-title">AWS Solutions Architect</h3>
+                    <p class="cert-issuer">Amazon Web Services</p>
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        <span>Viewed 2m ago</span>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon">🎯</div>
+                    <h3 class="cert-title">TensorFlow Developer</h3>
+                    <p class="cert-issuer">Google</p>
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        <span>Viewed 5m ago</span>
+                    </div>
+                </div>
+                <div class="cert-card">
+                    <div class="cert-icon">⚡</div>
+                    <h3 class="cert-title">Full Stack NanoDegree</h3>
+                    <p class="cert-issuer">Udacity</p>
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        <span>Viewed 8m ago</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Contact -->
+        <section id="contact" class="section">
+            <div class="contact-container">
+                <h2 class="contact-title">Initiate Contact</h2>
+                <p class="contact-subtitle">Ready to build the future together?</p>
+                <form id="contact-form">
+                    <div class="form-group">
+                        <input type="text" class="form-input" placeholder=" " required>
+                        <label class="form-label">Your Name</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" class="form-input" placeholder=" " required>
+                        <label class="form-label">Email Address</label>
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-input" placeholder=" " rows="5" required></textarea>
+                        <label class="form-label">Your Message</label>
+                    </div>
+                    <button type="submit" class="magnetic-btn">Send Transmission</button>
+                </form>
+                <div class="urgency-bar">
+                    <p class="urgency-text">⚠️ Only 2 interview slots open this month</p>
+                    <div class="slots-bar">
+                        <div class="slots-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Confetti & Success -->
+    <div class="confetti-container"></div>
+    <div class="success-message">
+        <div class="success-icon">✨</div>
+        <h3 class="success-title">Message Received</h3>
+        <p>I'll respond within 24 hours</p>
+    </div>
+
+    <script>
+        // ============================================
+        // CORE ENGINE: STATE MANAGEMENT
+        // ============================================
+        const userState = {
+            scrollVelocity: 0,
+            hoverCount: 0,
+            timeOnSite: 0,
+            mouseX: window.innerWidth / 2,
+            mouseY: window.innerHeight / 2,
+            haloX: window.innerWidth / 2,
+            haloY: window.innerHeight / 2
+        };
+
+        // ============================================
+        // SMOOTH SCROLL ENGINE
+        // ============================================
+        let currentScroll = 0;
+        let targetScroll = 0;
+        const scrollWrapper = document.querySelector('.scroll-wrapper');
+        const sections = document.querySelectorAll('.section');
+
+        function getTotalScroll() {
+            return sections.length * window.innerHeight - window.innerHeight;
+        }
+
+        window.addEventListener('wheel', (e) => {
+            targetScroll += e.deltaY * 0.7;
+            targetScroll = Math.max(0, Math.min(targetScroll, getTotalScroll()));
+            userState.scrollVelocity = e.deltaY;
+        });
+
+        function smoothScroll() {
+            currentScroll += (targetScroll - currentScroll) * 0.08;
+            
+            const sectionHeight = window.innerHeight;
+            const currentSection = Math.floor(currentScroll / sectionHeight);
+            
+            sections.forEach((section, index) => {
+                const offset = currentScroll - (index * sectionHeight);
+                section.style.transform = `translateY(${-offset}px)`;
+                
+                // Parallax effects for about section
+                if (section.id === 'about') {
+                    const layers = section.querySelectorAll('.parallax-layer');
+                    layers[0].style.transform = `translateZ(-100px) scale(1.5) translateY(${offset * 0.3}px)`;
+                    layers[1].style.transform = `translateZ(0) translateY(${offset * 0.1}px)`;
+                    layers[2].style.transform = `translateZ(50px) scale(0.9) translateY(${-offset * 0.2}px)`;
+                }
+            });
+
+            // Update timeline items visibility
+            updateTimelineVisibility();
+            
+            requestAnimationFrame(smoothScroll);
+        }
+
+        smoothScroll();
+
+        // ============================================
+        // DUAL CURSOR SYSTEM
+        // ============================================
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorHalo = document.querySelector('.cursor-halo');
+
+        document.addEventListener('mousemove', (e) => {
+            userState.mouseX = e.clientX;
+            userState.mouseY = e.clientY;
+            
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+            
+            // Update CSS variables
+            document.documentElement.style.setProperty('--cursor-x', e.clientX + 'px');
+            document.documentElement.style.setProperty('--cursor-y', e.clientY + 'px');
+        });
+
+        function animateCursor() {
+            userState.haloX += (userState.mouseX - userState.haloX) * 0.15;
+            userState.haloY += (userState.mouseY - userState.haloY) * 0.15;
+            
+            cursorHalo.style.left = userState.haloX + 'px';
+            cursorHalo.style.top = userState.haloY + 'px';
+            
+            requestAnimationFrame(animateCursor);
+        }
+
+        animateCursor();
+
+        // Hover effects for interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, .project-portal, .cert-card, .menu-item, .nav-orb');
+        
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorHalo.classList.add('hovering');
+                userState.hoverCount++;
+            });
+            
+            el.addEventListener('mouseleave', () => {
+                cursorHalo.classList.remove('hovering');
+            });
+        });
+
+        // ============================================
+        // HERO SECTION - PARTICLE SYSTEM
+        // ============================================
+        const heroCanvas = document.querySelector('.hero-canvas');
+        const heroCtx = heroCanvas.getContext('2d');
+        
+        function resizeHeroCanvas() {
+            heroCanvas.width = window.innerWidth;
+            heroCanvas.height = window.innerHeight;
+        }
+        resizeHeroCanvas();
+        window.addEventListener('resize', resizeHeroCanvas);
+
+        const particles = [];
+        const particleCount = 200;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            
+            reset() {
+                this.x = Math.random() * heroCanvas.width;
+                this.y = Math.random() * heroCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                this.alpha = Math.random() * 0.5 + 0.2;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Mouse interaction
+                const dx = this.x - userState.mouseX;
+                const dy = this.y - userState.mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 150) {
+                    const force = (150 - dist) / 150;
+                    this.x += dx * force * 0.05;
+                    this.y += dy * force * 0.05;
+                }
+                
+                if (this.x < 0 || this.x > heroCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > heroCanvas.height) this.vy *= -1;
+            }
+            
+            draw() {
+                heroCtx.beginPath();
+                heroCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                heroCtx.fillStyle = `rgba(0, 245, 255, ${this.alpha})`;
+                heroCtx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateHero() {
+            heroCtx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            // Draw connections
+            particles.forEach((p1, i) => {
+                particles.slice(i + 1).forEach(p2 => {
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100) {
+                        heroCtx.beginPath();
+                        heroCtx.moveTo(p1.x, p1.y);
+                        heroCtx.lineTo(p2.x, p2.y);
+                        heroCtx.strokeStyle = `rgba(0, 245, 255, ${0.1 * (1 - dist / 100)})`;
+                        heroCtx.stroke();
+                    }
+                });
+            });
+            
+            requestAnimationFrame(animateHero);
+        }
+
+        animateHero();
+
+        // Fluid typography distortion
+        const heroTitle = document.getElementById('hero-title');
+        const chars = heroTitle.textContent.split('').map((char, i) => {
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = char;
+            return span;
+        });
+
+        heroTitle.innerHTML = '';
+        chars.forEach(char => heroTitle.appendChild(char));
+
+        heroTitle.addEventListener('mousemove', (e) => {
+            const rect = heroTitle.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            chars.forEach((char, i) => {
+                const charRect = char.getBoundingClientRect();
+                const charX = charRect.left + charRect.width / 2;
+                const charY = charRect.top + charRect.height / 2;
+                
+                const dx = e.clientX - charX;
+                const dy = e.clientY - charY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 100) {
+                    const force = (100 - dist) / 100;
+                    const angle = Math.atan2(dy, dx);
+                    const moveX = Math.cos(angle) * force * 30;
+                    const moveY = Math.sin(angle) * force * 30;
+                    
+                    char.style.transform = `translate(${moveX}px, ${moveY}px) scale(${1 + force * 0.3})`;
+                } else {
+                    char.style.transform = 'translate(0, 0) scale(1)';
+                }
+            });
+        });
+
+        heroTitle.addEventListener('mouseleave', () => {
+            chars.forEach(char => {
+                char.style.transform = 'translate(0, 0) scale(1)';
+            });
+        });
+
+        // ============================================
+        // ORBITAL NAVIGATION
+        // ============================================
+        const navOrb = document.querySelector('.nav-orb');
+        const orbitalMenu = document.querySelector('.orbital-menu');
+        const menuItems = document.querySelectorAll('.menu-item');
+        let menuOpen = false;
+
+        navOrb.addEventListener('click', () => {
+            menuOpen = !menuOpen;
+            orbitalMenu.classList.toggle('active');
+            
+            if (menuOpen) {
+                const radius = 120;
+                const centerX = 150;
+                const centerY = 150;
+                
+                menuItems.forEach((item, index) => {
+                    const angle = (index / menuItems.length) * Math.PI * 2;
+                    const x = centerX + Math.cos(angle) * radius - item.offsetWidth / 2;
+                    const y = centerY + Math.sin(angle) * radius - item.offsetHeight / 2;
+                    
+                    item.style.left = x + 'px';
+                    item.style.top = y + 'px';
+                });
+            }
+        });
+
+        // Gravitational pull effect
+        menuItems.forEach(item => {
+            item.addEventListener('mousemove', (e) => {
+                const rect = item.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const dx = e.clientX - centerX;
+                const dy = e.clientY - centerY;
+                
+                item.style.transform = `translate(${dx * 0.3}px, ${dy * 0.3}px)`;
+            });
+            
+            item.addEventListener('mouseleave', () => {
+                item.style.transform = 'translate(0, 0)';
+            });
+        });
+
+        // ============================================
+        // SKILLS CANVAS - NEURAL SYNAPSE WEB
+        // ============================================
+        const skillsCanvas = document.getElementById('skills-canvas');
+        const skillsCtx = skillsCanvas.getContext('2d');
+        
+        function resizeSkillsCanvas() {
+            skillsCanvas.width = window.innerWidth;
+            skillsCanvas.height = window.innerHeight;
+        }
+        resizeSkillsCanvas();
+        window.addEventListener('resize', resizeSkillsCanvas);
+
+        const skillNodes = [
+            { name: 'JavaScript', x: 0.3, y: 0.3, connections: [1, 2, 3] },
+            { name: 'Python', x: 0.7, y: 0.3, connections: [0, 4, 5] },
+            { name: 'React', x: 0.2, y: 0.5, connections: [0, 6] },
+            { name: 'Node.js', x: 0.5, y: 0.5, connections: [0, 1, 7] },
+            { name: 'TensorFlow', x: 0.8, y: 0.5, connections: [1, 8] },
+            { name: 'AWS', x: 0.4, y: 0.7, connections: [1, 3, 7] },
+            { name: 'CSS3', x: 0.1, y: 0.7, connections: [2] },
+            { name: 'MongoDB', x: 0.6, y: 0.7, connections: [3, 5] },
+            { name: 'Docker', x: 0.9, y: 0.7, connections: [4, 5] }
+        ];
+
+        skillNodes.forEach(node => {
+            node.x = node.x * skillsCanvas.width;
+            node.y = node.y * skillsCanvas.height;
+            node.vx = (Math.random() - 0.5) * 0.5;
+            node.vy = (Math.random() - 0.5) * 0.5;
+            node.pulse = 0;
+        });
+
+        function animateSkills() {
+            skillsCtx.clearRect(0, 0, skillsCanvas.width, skillsCanvas.height);
+            
+            // Update positions
+            skillNodes.forEach(node => {
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                if (node.x < 50 || node.x > skillsCanvas.width - 50) node.vx *= -1;
+                if (node.y < 50 || node.y > skillsCanvas.height - 50) node.vy *= -1;
+                
+                if (node.pulse > 0) node.pulse--;
+            });
+
+            // Draw connections
+            skillNodes.forEach((node, i) => {
+                node.connections.forEach(connIndex => {
+                    const connNode = skillNodes[connIndex];
+                    skillsCtx.beginPath();
+                    skillsCtx.moveTo(node.x, node.y);
+                    skillsCtx.lineTo(connNode.x, connNode.y);
+                    
+                    const gradient = skillsCtx.createLinearGradient(node.x, node.y, connNode.x, connNode.y);
+                    gradient.addColorStop(0, 'rgba(0, 245, 255, 0.3)');
+                    gradient.addColorStop(1, 'rgba(255, 0, 230, 0.3)');
+                    skillsCtx.strokeStyle = gradient;
+                    skillsCtx.lineWidth = 1 + node.pulse * 0.5;
+                    skillsCtx.stroke();
+                });
+            });
+
+            // Draw nodes
+            skillNodes.forEach((node, i) => {
+                // Glow effect
+                const glowGradient = skillsCtx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 30 + node.pulse * 10);
+                glowGradient.addColorStop(0, 'rgba(0, 245, 255, 0.3)');
+                glowGradient.addColorStop(1, 'transparent');
+                skillsCtx.fillStyle = glowGradient;
+                skillsCtx.fillRect(node.x - 30 - node.pulse * 10, node.y - 30 - node.pulse * 10, 60 + node.pulse * 20, 60 + node.pulse * 20);
+                
+                // Node circle
+                skillsCtx.beginPath();
+                skillsCtx.arc(node.x, node.y, 8 + node.pulse * 2, 0, Math.PI * 2);
+                skillsCtx.fillStyle = '#00f5ff';
+                skillsCtx.fill();
+                
+                // Label
+                skillsCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                skillsCtx.font = '12px Segoe UI';
+                skillsCtx.textAlign = 'center';
+                skillsCtx.fillText(skillNodes[i].name, node.x, node.y - 20);
+            });
+
+            requestAnimationFrame(animateSkills);
+        }
+
+        animateSkills();
+
+        // Hover interaction for skill nodes
+        skillsCanvas.addEventListener('mousemove', (e) => {
+            const rect = skillsCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            skillNodes.forEach(node => {
+                const dx = mouseX - node.x;
+                const dy = mouseY - node.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 50) {
+                    node.pulse = 30;
+                    
+                    // Variable reward system
+                    if (Math.random() > 0.7) {
+                        // Random micro-effect
+                        const effects = ['glitch', 'ripple', 'sparkle'];
+                        const effect = effects[Math.floor(Math.random() * effects.length)];
+                        console.log(`Triggered ${effect} effect`);
+                    }
+                }
+            });
+        });
+
+        // ============================================
+        // TIMELINE VISIBILITY
+        // ============================================
+        function updateTimelineVisibility() {
+            const journeySection = document.getElementById('journey');
+            const journeyRect = journeySection.getBoundingClientRect();
+            
+            if (journeyRect.top < window.innerHeight && journeyRect.bottom > 0) {
+                const timelineItems = document.querySelectorAll('.timeline-item');
+                const scrollProgress = (window.innerHeight - journeyRect.top) / (window.innerHeight + journeyRect.height);
+                
+                timelineItems.forEach((item, index) => {
+                    const threshold = (index + 1) / (timelineItems.length + 1);
+                    if (scrollProgress > threshold) {
+                        item.classList.add('visible');
+                    }
+                });
+            }
+        }
+
+        // ============================================
+        // CERTIFICATION CARDS 3D TILT
+        // ============================================
+        const certCards = document.querySelectorAll('.cert-card');
+        
+        certCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const rotateX = (e.clientY - centerY) / 20;
+                const rotateY = (centerX - e.clientX) / 20;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        });
+
+        // ============================================
+        // MAGNETIC BUTTON
+        // ============================================
+        const magneticBtn = document.querySelector('.magnetic-btn');
+        
+        magneticBtn.addEventListener('mousemove', (e) => {
+            const rect = magneticBtn.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const dx = e.clientX - centerX;
+            const dy = e.clientY - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 150) {
+                const pullX = dx * 0.3;
+                const pullY = dy * 0.3;
+                magneticBtn.style.transform = `translate(${pullX}px, ${pullY}px)`;
+            }
+        });
+        
+        magneticBtn.addEventListener('mouseleave', () => {
+            magneticBtn.style.transform = 'translate(0, 0)';
+        });
+
+        // ============================================
+        // CONTACT FORM & CONFETTI
+        // ============================================
+        const contactForm = document.getElementById('contact-form');
+        const confettiContainer = document.querySelector('.confetti-container');
+        const successMessage = document.querySelector('.success-message');
+
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Create confetti
+            const colors = ['#00f5ff', '#ff00e6', '#7b2cbf', '#ffffff'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                confettiContainer.appendChild(confetti);
+                
+                // Animate confetti
+                const duration = Math.random() * 2 + 2;
+                const delay = Math.random() * 0.5;
+                
+                confetti.animate([
+                    { transform: `translateY(0) rotate(0)`, opacity: 1 },
+                    { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                ], {
+                    duration: duration * 1000,
+                    delay: delay * 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                });
+            }
+            
+            confettiContainer.classList.add('active');
+            
+            setTimeout(() => {
+                successMessage.classList.add('active');
+                contactForm.reset();
+            }, 500);
+            
+            setTimeout(() => {
+                confettiContainer.classList.remove('active');
+                confettiContainer.innerHTML = '';
+                successMessage.classList.remove('active');
+            }, 4000);
+        });
+
+        // ============================================
+        // TIME TRACKER FOR URGENCY
+        // ============================================
+        setInterval(() => {
+            userState.timeOnSite++;
+        }, 1000);
+
+        // ============================================
+        // VELOCITY-BASED BLUR EFFECT
+        // ============================================
+        let lastScrollY = currentScroll;
+        
+        function updateVelocity() {
+            userState.scrollVelocity = currentScroll - lastScrollY;
+            lastScrollY = currentScroll;
+            
+            // Apply motion blur based on velocity
+            const blurAmount = Math.min(Math.abs(userState.scrollVelocity) * 0.02, 10);
+            scrollWrapper.style.filter = `blur(${blurAmount}px)`;
+            
+            requestAnimationFrame(updateVelocity);
+        }
+
+        updateVelocity();
+
+        // ============================================
+        // SCROLL TO SECTION FROM MENU
+        // ============================================
+        menuItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = item.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                const sectionIndex = Array.from(sections).indexOf(targetSection);
+                
+                if (sectionIndex !== -1) {
+                    targetScroll = sectionIndex * window.innerHeight;
+                    orbitalMenu.classList.remove('active');
+                    menuOpen = false;
+                }
+            });
+        });
+
+        console.log('🧠 The Living Portfolio initialized');
+        console.log('⚡ Physics engine active');
+        console.log('🎯 Neuro-design patterns engaged');
+    </script>
+</body>
+</html>
